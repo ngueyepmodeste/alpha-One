@@ -1,1 +1,1 @@
-#app: le code source de nodetre application developpé par les Devs
+#app: le code source de notre application developpé par les Devs
