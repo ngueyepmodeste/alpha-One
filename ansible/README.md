@@ -1,0 +1,2 @@
+#Ansible: 
+Ansible : Pour la gestion de la configuration des serveurs et des conteneurs. Peut être utilisé pour automatiser l'installation des outils et des configurations nécessaires sur les instances AWS ou sur les clusters Kubernetes.
