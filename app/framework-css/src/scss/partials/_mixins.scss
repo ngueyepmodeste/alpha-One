@@ -1,0 +1,93 @@
+@use "sass:color";
+@use "functions" as f;
+
+@mixin resetA {
+	text-decoration: none;
+	color: inherit;
+}
+
+@mixin resetList {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+@mixin resetButton {
+	border: none;
+	background-color: transparent;
+	padding: 0;
+	cursor: pointer;
+}
+
+@mixin resetSelect {
+	border: none;
+	color: inherit;
+	background-color: transparent;
+}
+
+@mixin boxShadow($shadowColor: var(--shadow-color)) {
+	box-shadow: 0px 0px 20px 1px $shadowColor;
+}
+
+@mixin scrollbar() {
+	&::-webkit-scrollbar {
+		width: f.rem(15);
+	}
+
+	&::-webkit-scrollbar-track {
+		background: var(--background-color);
+		border-radius: f.rem(10);
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--border-color);
+		border-radius: f.rem(10);
+		border: f.rem(5) solid var(--background-color);
+	}
+
+	&::-webkit-scrollbar-thumb:hover {
+		background: var(--shadow-color);
+	}
+}
+
+@mixin flexbox(
+	$direction: null,
+	$justify: null,
+	$align: null,
+	$gap: null,
+	$wrap: null
+) {
+	display: flex;
+	@if ($direction != null) {
+		flex-direction: $direction;
+	}
+	@if ($justify != null) {
+		justify-content: $justify;
+	}
+	@if ($align != null) {
+		align-items: $align;
+	}
+	@if ($gap != null) {
+		gap: $gap;
+	}
+	@if ($wrap != null) {
+		flex-wrap: $wrap;
+	}
+}
+
+@mixin absolute($top: 0, $bottom: 0, $right: 0, $left: 0) {
+	position: absolute;
+	@if ($top != null) {
+		top: $top;
+	}
+	@if ($bottom != null) {
+		bottom: $bottom;
+	}
+	@if ($right != null) {
+		right: $right;
+	}
+	@if ($left != null) {
+		left: $left;
+	}
+
+};
