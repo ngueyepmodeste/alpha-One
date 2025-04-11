@@ -44,6 +44,7 @@ services:
     volumes:
       - ./Project:$PHP_USER_HOME_DIRECTORY
       - ./php.ini:/usr/local/etc/php/conf.d/custom-php.ini
+      - ./uploads:/home/php/uploads
 
   migration:
     container_name: migration
