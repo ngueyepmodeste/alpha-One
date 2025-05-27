@@ -1,70 +1,127 @@
-📁 Modules Terraform pour notre architecture
-1. vpc/
-💡 Contient :
-● Création des VPC (VPC_A, VPC_B si besoin)
-● Subnets publics / privés
-● Route tables
-● IGW / NAT
-● VPC Peering
-● VPC Endpoints (ex. pour S3)
-📦 Pourquoi en module ?
-C’est une brique réseau clé, souvent utilisée ou modifiée séparément.
-2. bastion/
-💡 Contient :
-● Instance EC2 Bastion
-● Security Group du bastion
-● Clé SSH (Key Pair)
-● IAM Role minimal (si besoin)
-📦 Pourquoi ?
-Le bastion est isolé, a des règles strictes et n’a pas besoin d’être déployé en
-même temps que les autres machines.
-3. k8s-master/💡 Contient :
-● EC2-Master-k8s
-● GitLab Runner / Ansible
-● Security Groups liés
-● User Data pour bootstrapper si besoin
-📦 Pourquoi ?
-Cette partie est liée à l’orchestration et l’automatisation du cluster, elle est
-critique et doit être modulaire.
-4. autoscaling-k8s-workers/
-💡 Contient :
-● EC2-Worker1-k8s + Worker2 (ASG)
-● Launch Template ou Launch Configuration
-● Security Group des workers
-● Auto Scaling Group avec policies
-● Subnets cibles (multi-AZ)
-📦 Pourquoi ?
-C’est scalable, évolutif, et très souvent modifié à part (par exemple, ajuster le
-nombre de workers).
-5. alb/
-💡 Contient :
-● Application Load Balancer
-● Listener HTTP/HTTPS avec ACM● Security Groups
-● Intégration WAF (en option ici aussi)
-📦 Pourquoi ?
-C’est l’entrée principale de ton app, gérée séparément pour appliquer règles,
-SSL, redirection, WAF.
-6. iam/
-💡 Contient :
-● Roles pour EC2, GitLab Runner, etc.
-● Policies attachées
-● Optionnellement utilisateurs IAM (selon ton process)
-📦 Pourquoi ?
-Séparer la gestion des permissions : propre, sécurisé, facile à auditer.
-7. backup/
-💡 Contient :
-● Backup Vault
-● Backup Plan (planning)
-● Backup Selection (les volumes à sauvegarder)
-📦 Pourquoi ?
-Tu pourras ajuster indépendamment la stratégie de sauvegarde sans toucher au
-reste.
-8. s3/ (optionnel mais utile si tu as des buckets spécifiques)💡 Contient :
-● Buckets pour stockage (ex. photos uploadées)
-● Politiques de bucket
-● Logging / versioning / lifecycle
-9. route53/ (si tu gères les DNS avec Terraform)
-💡 Contient :
-● Zone DNS
-● Enregistrements A, CNAME, etc.
-● Alias vers ALB
+## ALPHA-ONE : https://www.share-pictures.com
+----------------------------------------------
+## ARCHITECTURE DU SITE : SHARE-PICTURES
+## ############################
+
+🌐 1. Route d’accès utilisateur
+Internet ↔ Route 53 ↔ WAF ↔ ALB
+
+Internet : Point d'entrée des clients.
+
+Route 53 : Fournit la résolution DNS pour www.share-pictures.com. Il oriente le trafic HTTP(S) entrant vers l'Application Load Balancer (ALB).
+
+WAF (Web Application Firewall) : Protège contre les attaques web (injections SQL, XSS, etc.). Il filtre les requêtes HTTP avant qu'elles atteignent l’ALB.
+
+ALB (Application Load Balancer) :
+
+Distribue le trafic vers les pods Kubernetes déployés dans les EC2 worker nodes.
+
+Est placé dans une subnet publique et connecté à un NAT Gateway B pour trafic sortant.
+
+📦 2. Infrastructure Kubernetes (dans le VPC principal)
+🔹 Master Node (EC2-Master-k8s)
+Situé dans une private subnet A.
+
+Représente le nœud de contrôle du cluster.
+
+Héberge les composants maîtres : API Server, etcd, Controller Manager, Scheduler.
+
+Accessible via kubectl (installé ici pour gestion CLI).
+
+Connecté à un Security Group spécifique (protège l’accès réseau).
+
+🔹 Worker Nodes
+EC2-Worker1-k8s dans private subnet B.
+
+EC2-Worker2-k8s dans une autre private subnet, au sein d'un Auto Scaling Group.
+
+Gère l’élasticité horizontale selon la charge.
+
+Hébergent les pods Kubernetes, dont le service de partage de photos.
+
+Connectés au Master via le VPC principal, avec des règles de sécurité (Security Groups) permettant la communication sur les ports Kubernetes.
+
+🔧 3. Outils DevOps/CloudOps
+🔸 EC2-Bastion (Public Subnet)
+Point d’accès sécurisé SSH à l’infrastructure (saut).
+
+Dans une subnet publique.
+
+Utilisé pour accéder aux autres instances privées.
+
+🔸 EC2-Vault (HashiCorp Vault)
+Hébergé dans une subnet privée sécurisée.
+
+Gère les secrets (tokens, credentials) pour toute l'infra.
+
+Intégré à Runner CI/CD + Ansible (hébergé dans la même subnet privée).
+
+Ansible : déploiement automatisé.
+
+Runner CI/CD : intégration continue et déploiement via GitOps.
+
+Le tout est restreint via un Security Group dédié.
+
+☁️ 4. Ressources AWS Managées
+Terraform : Utilisé pour le provisionnement de toute l’infrastructure.
+
+IAM : Gère les identités, rôles et politiques d'accès pour tous les services AWS.
+
+KMS : Clés de chiffrement (intégration avec Vault et S3).
+
+CloudWatch : Monitoring des logs, métriques, et alertes.
+
+AWS Config : Suivi de la conformité et de la configuration des ressources.
+
+AWS Certificate Manager : Fournit le certificat SSL pour https://www.share-pictures.com (terminé sur ALB).
+
+AWS Backup : Sauvegarde des volumes et configurations.
+
+AWS GuardDuty : Service de détection de menaces et de comportements anormaux.
+
+S3 : Stockage des images partagées via l’application (connecté via endpoint privé).
+
+🔀 5. Connectivité et Réseaux
+VPC principal et secondaire : Architecture multi-VPC avec VPC peering (connexion directe entre les VPCs).
+
+NAT Gateways (A & B) :
+
+Permettent aux instances en subnet privé d’accéder à Internet sans être directement exposées.
+
+IGW (Internet Gateways A & B) :
+
+Connectent les subnets publics à Internet.
+
+VPC Endpoints A & B :
+
+Permettent la communication privée entre les instances et les services AWS comme S3, sans passer par Internet public.
+
+📷 6. Application Photo Sharing
+Déployée sur les Worker Nodes Kubernetes.
+
+Accessible via le nom de domaine https://www.share-pictures.com grâce à :
+
+Route 53 → résout le domaine.
+
+WAF → sécurise le trafic HTTP.
+
+ALB → route le trafic vers les services Kubernetes exposés.
+
+L’application utilise S3 pour le stockage des photos.
+
+Vault fournit les secrets pour sécuriser les communications interservices.
+
+CI/CD via GitOps permet déploiement automatique des mises à jour.
+
+🔄 7. Flux de données simplifié
+Client → www.share-pictures.com (Route 53)
+
+Route 53 → WAF → ALB
+
+ALB → Services exposés de Kubernetes (via ingress ou NodePort)
+
+Application photo → S3 pour le stockage
+
+Vault → fournit credentials aux services
+
+Admin/DevOps → accède via Bastion ou Ansible pour déploiement
