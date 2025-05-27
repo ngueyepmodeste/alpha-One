@@ -1,0 +1,5 @@
+# —— Clés privées ——————————————
+*.pem
+# —— Autres fichiers temporaires ————
+# (si tu en as)
+*.log
