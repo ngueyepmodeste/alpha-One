@@ -3,3 +3,13 @@
 # —— Autres fichiers temporaires ————
 # (si tu en as)
 *.log
+
+# Ignore les répertoires .terraform dans tous les environnements et les fichier .exe ( volumineux )
+terraform/environments/**/.terraform/
+terraform/environments/**/*.exe
+# Ignore les fichiers tfstate et backups dans tous les environnements
+terraform/environments/**/*.tfstate
+terraform/environments/**/*.tfstate.backup
+
+# Ignore les clés .pem
+*.pem
