@@ -12,4 +12,10 @@ RUN echo "upload_max_filesize=${PHP_UPLOAD_MAX_FILESIZE}" > /usr/local/etc/php/c
 
 RUN useradd --create-home --system --home-dir $PHP_USER_HOME_DIRECTORY --shell $PHP_USER_SHELL --uid $PHP_USER_IDENTIFIER $PHP_USER_NAME
 
+# Assurer que le dossier uploads est accessible à l'utilisateur php
+RUN mkdir -p /home/php/uploads && \
+    chown -R php:php /home/php/uploads && \
+    chmod -R 775 /home/php/uploads
+
+
 RUN docker-php-ext-install pdo_mysql
