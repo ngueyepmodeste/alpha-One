@@ -13,35 +13,6 @@ variable "project" {
   type        = string
   default     = "alpha-one"
 }
-
-variable "vpcA_id" {
-  description = "Environnement (ex: dev, staging, prod)"
-  type        = string
-}
-variable "vpcB_id" {
-  description = "Environnement (ex: dev, staging, prod)"
-  type        = string
-}
-
-variable "vpc_cidr_a" {
-  description = "CIDR block pour le VPC A"
-  type        = string
-}
-
-variable "vpc_cidr_b" {
-  description = "CIDR block pour le VPC B"
-  type        = string
-}
-
-variable "key_name" {
-  description = "Nom de la clé SSH pour l’accès à la bastion"
-  type        = string
-}
-
-variable "domain_name" {
-  description = "Nom de domaine principal (ex: app.mondomaine.com)"
-  type        = string
-}
 variable "env" {
   description = "Environnement (ex: dev, staging, prod)"
   type        = string
