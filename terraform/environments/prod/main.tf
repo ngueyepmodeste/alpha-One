@@ -1,11 +1,11 @@
-##################### MODULES ########################
-
+################### MODULES ########################
 data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["099720109477"] # Canonical (Ubuntu)
+  owners      = ["099720109477"] # Canonical
+
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-20.04-amd64-server-*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
   }
 }
 
@@ -18,8 +18,8 @@ module "vpc-peering"{
 
   vpc_a_id             = module.vpc.vpc_a_id
   vpc_b_id             = module.vpc.vpc_b_id
-  vpc_a_cidr           = var.vpc_cidr_a
-  vpc_b_cidr           = var.vpc_cidr_b
+  vpc_a_cidr           = "10.10.0.0/16"
+  vpc_b_cidr           = "192.168.0.0/16"
   vpc_a_route_table_id = module.vpc.vpc_a_route_table_id
   vpc_b_route_table_id = module.vpc.vpc_b_route_table_id
 }
@@ -32,7 +32,7 @@ module "security-groups" {
     vpc_b = module.vpc.vpc_b_id
   }
 
-  allowed_ssh_cidrs      = ["X.X.X.X/32"]
+  allowed_ssh_cidrs      = ["10.10.0.0/16"]
   allowed_internal_cidrs = ["10.10.0.0/16", "192.168.0.0/16"]
   project_name           = "alpha-one"
   environment            = var.env
@@ -42,11 +42,12 @@ module "bastion" {
   source            =   "../../modules/bastion"
   vpc_id            = module.vpc.vpc_a_id
   subnet_id         = module.vpc.vpc_a_public_subnet_id
-  ami_id            = "ami-xxxxxxxx"
-  instance_type     = "t3.micro"
+  ami_id            = "ami-0df368112825f8d8f"
+  instance_type     = "t2.micro"
   key_name          = "alpha-one_key"
-  allowed_ssh_cidrs = ["xx.xx.xx.xx/32"]
+  allowed_ssh_cidrs = ["0.0.0.0/0"]
   sg_bastion = module.security-groups.sg_bastion_id
+  bastion_private_key_path = "../../../alpha-one_key.pem"
 }
 
 module "vault" {
@@ -56,10 +57,10 @@ module "vault" {
   vpc_id           = module.vpc.vpc_a_id
   subnet_id        = module.vpc.vpc_a_public_subnet_id
   ami_id                         = data.aws_ami.ubuntu.id
-  instance_type                  = "t3.medium"
+  instance_type                  =  "c3.large"
   key_pair_name    = "alpha-one_key"
   ssh_user                       = "ubuntu"
-  private_key_path = "../../../alpha-one_key"
+  private_key_path = "../../../alpha-one_key.pem"
   private_ip                     = "10.10.2.10"
   allowed_ips                    = ["10.10.0.0/16"]
   vault_s3_backend_bucket_arn   = module.s3-storage.vault_backend_bucket_arn
@@ -68,15 +69,15 @@ module "vault" {
 
 module "gitlab_runner" {
   source                = "../../modules/gitlab_runner"
-  ami_id                = "xxxxxxxxxx"
-  instance_type         = "t3.medium"
+  ami_id                = "ami-0df368112825f8d8f"
+  instance_type         = "m5d.xlarge"
   vpc_id                = module.vpc.vpc_a_id
   subnet_id             = module.vpc.vpc_a_private_subnet_id
   security_group_id      = module.security-groups.sg_runner_id
   instance_profile_name = module.iam.iam_instance_profile_runner
   key_name    = "alpha-one_key"
   ssh_user                       = "ubuntu"
-  private_key_path = "../../../alpha-one_key"
+  private_key_path = "../../../alpha-one_key.pem"
 }
 
 module "s3-storage"{
@@ -94,19 +95,19 @@ module "iam" {
 
 module "k8s_master" {
   source           = "../../modules/k8s_master"
-  ami_id             = "ami-0xxxxxx"
-  instance_type      = "t3.medium"
+  ami_id             = "ami-0df368112825f8d8f"
+  instance_type      = "m5d.xlarge"
   key_name           = "alpha-one_key"
   subnet_id          = module.vpc.vpc_b_private_subnet_ids[0]  # subnet privé A du VPC B
   private_ip         = module.k8s_master.master_private_ip
-  security_group_ids = module.security-groups.sg_master_id
+  security_group_ids = [module.security-groups.sg_master_id]
 }
 
 
 module "k8s_workers" {
   source                = "../../modules/k8s_workers"
-  ami_id                = "ami-0xxxxxx"
-  instance_type         = "t3.medium"
+  ami_id                = "ami-0df368112825f8d8f"
+  instance_type         = "m5d.xlarge"
   key_name              = "alpha-one_key"
   subnet_id             = module.vpc.vpc_b_private_subnet_ids[1]
   security_group_id     = module.security-groups.sg_worker_id
@@ -118,7 +119,7 @@ module "k8s_workers" {
 module "alb" {
   source             = "../../modules/alb"
   vpc_id             = module.vpc.vpc_a_id
-  public_subnet_ids  = module.vpc.vpc_b_public_subnet_id
+  public_subnet_ids  = [module.vpc.vpc_b_public_subnet_id]
   security_group_ids = [module.security-groups.sg_alb_id]
   acm_cert_arn       = module.acm.cert_arn
   environment        = "prod"
@@ -133,6 +134,7 @@ module "acm" {
   providers = {
     aws = aws.us_east_1
   }
+  depends_on = [module.route53]
 }
 
 module "route53" {
@@ -152,7 +154,7 @@ module "vpc-endpoints" {
 
   # VPC A
   vpc_a_id                 = module.vpc.vpc_a_id
-  vpc_a_private_subnets    = module.vpc.vpc_a_private_subnet_id
+  vpc_a_private_subnets    = [module.vpc.vpc_a_private_subnet_id]
   vpc_a_route_table_id     = module.vpc.vpc_a_route_table_id
   vpc_a_endpoint_sg_id     = module.security-groups.sg_vault_id
 

@@ -8,8 +8,15 @@ terraform {
   required_version = ">= 1.6.0"
 }
 
+# Provider par défaut
 provider "aws" {
-  region = "us-east-1"
-  profile = var.aws_profile
-  alias = "us_east_1"
+  profile = "mon-profil-pro"
+  region  = "us-east-1"
+}
+
+# Provider avec alias pour certains modules
+provider "aws" {
+  alias   = "us_east_1"
+  profile = "mon-profil-pro"
+  region  = "us-east-1"
 }
