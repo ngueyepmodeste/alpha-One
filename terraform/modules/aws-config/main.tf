@@ -16,6 +16,47 @@ resource "aws_s3_bucket_public_access_block" "config" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+resource "aws_s3_bucket_policy" "config" {
+  bucket = aws_s3_bucket.config.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AWSConfigReadOnly"
+        Effect    = "Allow"
+        Principal = {
+          Service = "config.amazonaws.com"
+        }
+        Action = [
+          "s3:GetBucketAcl",
+          "s3:GetBucketPolicy"
+        ]
+        Resource = aws_s3_bucket.config.arn
+        Condition = {
+          StringEquals = {
+            "aws:RequestedRegion" = "us-east-1"
+          }
+        }
+      },
+      {
+        Sid       = "AWSConfigWrite"
+        Effect    = "Allow"
+        Principal = {
+          Service = "config.amazonaws.com"
+        }
+        Action = "s3:PutObject"
+        Resource = "${aws_s3_bucket.config.arn}/*"
+        Condition = {
+          StringEquals = {
+            "s3:x-amz-acl"         = "bucket-owner-full-control",
+            "aws:RequestedRegion" = "us-east-1"
+          }
+        }
+      }
+    ]
+  })
+}
 
 resource "aws_config_configuration_recorder" "recorder" {
   name     = "config-recorder"

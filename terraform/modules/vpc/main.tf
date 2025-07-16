@@ -85,12 +85,19 @@ resource "aws_internet_gateway" "igw_b" {
   tags   = merge(local.common_tags, { Name = "igw_b" })
 }
 
-resource "aws_subnet" "public_subnet_b" {
+resource "aws_subnet" "public_subnet_b1" {
   vpc_id                  = aws_vpc.vpc_b.id
-  cidr_block              = var.public_subnet_b_cidr
+  cidr_block              = var.public_subnet_b1_cidr
   availability_zone       = var.az_a
   map_public_ip_on_launch = true
-  tags                    = merge(local.common_tags, { Name = "public-subnet-b" })
+  tags                    = merge(local.common_tags, { Name = "public-subnet-b1" })
+}
+resource "aws_subnet" "public_subnet_b2" {
+  vpc_id                  = aws_vpc.vpc_b.id
+  cidr_block              = var.public_subnet_b2_cidr
+  availability_zone       = var.az_d
+  map_public_ip_on_launch = true
+  tags                    = merge(local.common_tags, { Name = "public-subnet-b2" })
 }
 
 resource "aws_subnet" "private_subnet_b1" {
@@ -123,7 +130,7 @@ resource "aws_eip" "nat_eip_b" {
 
 resource "aws_nat_gateway" "nat_gw_b" {
   allocation_id = aws_eip.nat_eip_b.id
-  subnet_id     = aws_subnet.public_subnet_b.id
+  subnet_id     = aws_subnet.public_subnet_b2.id
   tags          = merge(local.common_tags, { Name = "nat_gw_b" })
 }
 
@@ -137,7 +144,7 @@ resource "aws_route_table" "rt_private_b" {
 }
 
 resource "aws_route_table_association" "assoc_public_b" {
-  subnet_id      = aws_subnet.public_subnet_b.id
+  subnet_id      = aws_subnet.public_subnet_b2.id
   route_table_id = aws_route_table.rt_public_b.id
 }
 

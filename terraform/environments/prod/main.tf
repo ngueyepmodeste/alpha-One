@@ -119,7 +119,7 @@ module "k8s_workers" {
 module "alb" {
   source             = "../../modules/alb"
   vpc_id             = module.vpc.vpc_a_id
-  public_subnet_ids  = [module.vpc.vpc_b_public_subnet_id]
+  public_subnet_ids  = module.vpc.vpc_b_public_subnet_ids
   security_group_ids = [module.security-groups.sg_alb_id]
   acm_cert_arn       = module.acm.cert_arn
   environment        = "prod"
