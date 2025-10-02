@@ -6,7 +6,9 @@ variable "vpc_a_private_subnets" {
   type = list(string)
 }
 variable "vpc_a_route_table_id" {}
-variable "vpc_a_endpoint_sg_id" {}
+variable "vpc_a_endpoint_sg_id" {
+  type        = list(string)
+}
 
 # VPC B
 variable "vpc_b_id" {}

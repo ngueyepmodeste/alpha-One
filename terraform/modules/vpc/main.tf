@@ -132,7 +132,13 @@ resource "aws_nat_gateway" "nat_gw_b" {
   allocation_id = aws_eip.nat_eip_b.id
   subnet_id     = aws_subnet.public_subnet_b2.id
   tags          = merge(local.common_tags, { Name = "nat_gw_b" })
+
+  depends_on = [
+    aws_nat_gateway.nat_gw_b,
+    aws_eip.nat_eip_b
+  ]
 }
+
 
 resource "aws_route_table" "rt_private_b" {
   vpc_id = aws_vpc.vpc_b.id

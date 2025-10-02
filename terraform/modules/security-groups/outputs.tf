@@ -7,7 +7,10 @@ output "sg_master_id" {
 }
 
 output "sg_worker_id" {
-  value = aws_security_group.worker.id
+  value = {
+    for k, sg in aws_security_group.worker :
+    k => sg.id
+  }
 }
 
 output "sg_alb_id" {
@@ -19,5 +22,5 @@ output "sg_runner_id" {
 }
 
 output "sg_vault_id" {
-  value = aws_security_group.vault.id
+  value = [for sg in aws_security_group.vault : sg.id]
 }

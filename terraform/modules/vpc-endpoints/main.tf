@@ -45,7 +45,7 @@ resource "aws_vpc_endpoint" "interface_endpoints_vpc_a" {
   service_name       = each.value
   vpc_endpoint_type  = "Interface"
   subnet_ids         = var.vpc_a_private_subnets
-  security_group_ids = [var.vpc_a_endpoint_sg_id]
+  security_group_ids = var.vpc_a_endpoint_sg_id
   private_dns_enabled = true
 
   tags = {

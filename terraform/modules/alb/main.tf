@@ -47,7 +47,7 @@ resource "aws_lb" "this" {
   security_groups    = var.security_group_ids
   subnets = var.public_subnet_ids
 
-  enable_deletion_protection = true
+  enable_deletion_protection = false
 
   tags = {
     Environment = var.environment

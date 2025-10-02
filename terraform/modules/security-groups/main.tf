@@ -41,7 +41,7 @@ resource "aws_security_group" "bastion" {
 resource "aws_security_group" "master" {
   name        = "sg_master"
   description = "Security Group for Kubernetes Master"
-
+  
   ingress = [
     {
       from_port        = 10250
@@ -152,9 +152,10 @@ resource "aws_security_group" "master" {
 
 # SG: K8s Worker
 resource "aws_security_group" "worker" {
+  for_each = var.vpc_id
   name        = "sg_worker"
+  vpc_id      = each.value
   description = "Security Group for Kubernetes Workers"
-
   ingress = [
     {
       from_port        = 5432
@@ -256,7 +257,7 @@ resource "aws_security_group" "worker" {
 resource "aws_security_group" "alb" {
   name        = "sg_alb"
   description = "Security Group for ALB"
-
+  vpc_id      = var.vpc_id["vpc_b"] 
   ingress {
     description      = "HTTP"
     from_port        = 80
@@ -327,9 +328,10 @@ resource "aws_security_group" "runner" {
 
 # SG: Vault
 resource "aws_security_group" "vault" {
-  name        = "sg_vault"
-  description = "Security Group for Vault"
-
+  for_each    = var.vpc_id
+  name        = "sg_vault_${each.key}"
+  description = "Security Group for Vault in ${each.key}"
+  vpc_id      = each.value
   ingress {
     description      = "Vault HTTPS access"
     from_port        = 8200
