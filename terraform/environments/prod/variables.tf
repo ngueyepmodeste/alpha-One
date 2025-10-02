@@ -18,8 +18,8 @@ variable "env" {
   type        = string
   default     = "prod"
 }
-variable "alias"{
+variable "alias" {
   description = "Alias de l'application (ex: app, api, db)"
   type        = string
-  default =  "us_east_1"
+  default     = "us_east_1"
 }
